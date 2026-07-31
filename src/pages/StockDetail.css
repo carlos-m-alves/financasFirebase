@@ -1,0 +1,206 @@
+.stock-detail {
+  max-width: 1000px;
+}
+
+.btn-back {
+  background: transparent;
+  border: 1px solid #2a2a3e;
+  color: #b0b0b0;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+  transition: all 0.2s;
+}
+
+.btn-back:hover {
+  border-color: #4fc3f7;
+  color: #fff;
+}
+
+.loading-text {
+  color: #888;
+  text-align: center;
+  padding: 2rem;
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+}
+
+.detail-header h1 {
+  color: #fff;
+  font-size: 2rem;
+  margin: 0;
+}
+
+.company-name {
+  color: #888;
+  font-size: 0.9rem;
+  margin: 0.25rem 0 0;
+}
+
+.detail-price-info {
+  text-align: right;
+}
+
+.detail-price {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.detail-change {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.detail-change.positive { color: #4caf50; }
+.detail-change.negative { color: #f44336; }
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.detail-card {
+  background: #1a1a2e;
+  border-radius: 12px;
+  padding: 1.25rem;
+  border: 1px solid #2a2a3e;
+}
+
+.detail-card h3 {
+  color: #e0e0e0;
+  font-size: 0.9rem;
+  margin: 0 0 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.position-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  font-size: 0.9rem;
+  color: #b0b0b0;
+  border-bottom: 1px solid #1f1f2e;
+}
+
+.position-row:last-child {
+  border-bottom: none;
+}
+
+.position-row .value {
+  color: #e0e0e0;
+  font-weight: 600;
+}
+
+.position-row.profit.positive .value { color: #4caf50; }
+.position-row.profit.negative .value { color: #f44336; }
+
+.chart-section {
+  background: #1a1a2e;
+  border-radius: 12px;
+  padding: 1.25rem;
+  border: 1px solid #2a2a3e;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.chart-header h3 {
+  color: #e0e0e0;
+  font-size: 0.9rem;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.range-selector {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.range-btn {
+  background: transparent;
+  border: 1px solid #2a2a3e;
+  color: #888;
+  padding: 0.35rem 0.7rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.range-btn:hover {
+  border-color: #4fc3f7;
+  color: #e0e0e0;
+}
+
+.range-btn.active {
+  background: #4fc3f7;
+  color: #0f0f1a;
+  border-color: #4fc3f7;
+}
+
+@media (max-width: 768px) {
+  .detail-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .detail-price-info {
+    text-align: left;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-header {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .detail-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .detail-price {
+    font-size: 1.5rem;
+  }
+
+  .detail-card, .chart-section {
+    padding: 1rem;
+  }
+
+  .btn-back {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.85rem;
+  }
+
+  .range-btn {
+    padding: 0.3rem 0.55rem;
+    font-size: 0.75rem;
+  }
+
+  .position-row {
+    font-size: 0.8rem;
+  }
+}

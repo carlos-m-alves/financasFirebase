@@ -1,0 +1,99 @@
+.stock-card {
+  background: #1a1a2e;
+  border-radius: 12px;
+  padding: 1.25rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid #2a2a3e;
+}
+
+.stock-card:hover {
+  transform: translateY(-2px);
+  border-color: #4fc3f7;
+  box-shadow: 0 4px 20px rgba(79, 195, 247, 0.1);
+}
+
+.stock-card.loading {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.stock-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.stock-ticker {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #fff;
+}
+
+.stock-logo {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: contain;
+}
+
+.stock-price {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #e0e0e0;
+  margin-bottom: 0.25rem;
+}
+
+.stock-price-usd {
+  font-size: 0.75rem;
+  color: #888;
+  margin-bottom: 0.25rem;
+}
+
+.stock-change-wrap {
+  margin-bottom: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.stock-change-label {
+  font-size: 0.7rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stock-change {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.stock-change.positive { color: #4caf50; }
+.stock-change.negative { color: #f44336; }
+
+.stock-dividend {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #ffb74d;
+  margin-bottom: 0.75rem;
+}
+
+.stock-portfolio-info {
+  border-top: 1px solid #2a2a3e;
+  padding-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #b0b0b0;
+}
+
+.info-row.profit.positive { color: #4caf50; }
+.info-row.profit.negative { color: #f44336; }
