@@ -1,4 +1,5 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import './Layout.css';
 
 const navItems = [
@@ -7,6 +8,14 @@ const navItems = [
 ];
 
 export default function Layout({ children }) {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  async function handleSignOut() {
+    await signOut();
+    navigate('/login');
+  }
+
   return (
     <div className="layout">
       <header className="header">
@@ -27,6 +36,11 @@ export default function Layout({ children }) {
             </NavLink>
           ))}
         </nav>
+        {user && (
+          <button className="logout-btn" onClick={handleSignOut} title="Sair">
+            Sair
+          </button>
+        )}
       </header>
       <main className="main-content">{children}</main>
     </div>

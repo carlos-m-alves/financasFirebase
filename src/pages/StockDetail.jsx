@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useStocks } from '../hooks/useStocks';
+import { usePrivacy } from '../context/PrivacyContext';
+import EyeToggle from '../components/EyeToggle/EyeToggle';
 import { fetchQuotes } from '../services/brapi';
 import { getStockHistory } from '../services/firebase';
 import { formatNumber, formatPercent } from '../utils/format';
@@ -22,6 +24,7 @@ const RANGE_DAYS = { '1mo': 31, '3mo': 92, '6mo': 183, '1y': 366, '2y': 731 };
 export default function StockDetail() {
   const { ticker } = useParams();
   const { stocks } = useStocks();
+  const { hideValues } = usePrivacy();
   const [quote, setQuote] = useState(null);
   const [history, setHistory] = useState([]);
   const [range, setRange] = useState('1y');
@@ -80,11 +83,44 @@ export default function StockDetail() {
     );
   }
 
-  const formatDate = (d) => {
-    if (!d) return '';
-    const s = String(d);
-    return `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
+  const parseDate = (d) => {
+    if (!d) return null;
+    const s = String(d).trim();
+    if (s.length >= 10 && s[4] === '-') {
+      const [y, m, day] = s.split('-').map(Number);
+      if (y && m && day) return new Date(y, m - 1, day);
+    }
+    if (s.length >= 8 && !s.includes('-')) {
+      const y = Number(s.slice(0, 4));
+      const m = Number(s.slice(4, 6));
+      const day = Number(s.slice(6, 8));
+      if (y && m && day) return new Date(y, m - 1, day);
+    }
+    const t = new Date(d);
+    return isNaN(t.getTime()) ? null : t;
   };
+
+  const formatDate = (d, short = false) => {
+    const dt = parseDate(d);
+    if (!dt) return '';
+    const dd = String(dt.getDate()).padStart(2, '0');
+    const mm = String(dt.getMonth() + 1).padStart(2, '0');
+    const yy = short ? String(dt.getFullYear()).slice(2) : dt.getFullYear();
+    return `${dd}/${mm}/${yy}`;
+  };
+
+  const formatTooltipLabel = (d) => {
+    const dt = parseDate(d);
+    if (!dt) return '';
+    return dt.toLocaleDateString('pt-BR', {
+      weekday: 'short',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  };
+
+  const mask = (value) => (hideValues ? "R$ ••••••" : value);
 
   return (
     <div className="stock-detail">
@@ -94,11 +130,12 @@ export default function StockDetail() {
           {quote?.longName && <p className="company-name">{quote.longName}</p>}
         </div>
         <div className="detail-price-info">
-          <div className="detail-price">R$ {formatNumber(price)}</div>
+          <div className="detail-price">R$ {mask(formatNumber(price))}</div>
           <div className={`detail-change ${isPositive ? 'positive' : 'negative'}`}>
-            {isPositive ? '+' : ''}{formatNumber(change)} ({isPositive ? '+' : ''}{formatPercent(changePercent)})
+            {hideValues ? '••••••' : `${isPositive ? '+' : ''}${formatNumber(change)} (${isPositive ? '+' : ''}${formatPercent(changePercent)})`}
           </div>
         </div>
+        <EyeToggle />
       </div>
 
       <div className="detail-grid">
@@ -111,16 +148,16 @@ export default function StockDetail() {
             </div>
             <div className="position-row">
               <span>Preço Médio</span>
-              <span className="value">R$ {formatNumber(portfolio.purchasePrice)}</span>
+              <span className="value">R$ {mask(formatNumber(portfolio.purchasePrice))}</span>
             </div>
             <div className="position-row">
               <span>Total Investido</span>
-              <span className="value">R$ {formatNumber(portfolio.quantity * portfolio.purchasePrice)}</span>
+              <span className="value">R$ {mask(formatNumber(portfolio.quantity * portfolio.purchasePrice))}</span>
             </div>
             <div className={`position-row profit ${profit >= 0 ? 'positive' : 'negative'}`}>
               <span>Lucro/Prejuízo</span>
               <span className="value">
-                {profit >= 0 ? '+' : ''}R$ {formatNumber(profit)} ({profitPercent >= 0 ? '+' : ''}{formatPercent(profitPercent)})
+                {hideValues ? '••••••' : `${profit >= 0 ? '+' : ''}R$ ${formatNumber(profit)} (${profitPercent >= 0 ? '+' : ''}${formatPercent(profitPercent)})`}
               </span>
             </div>
           </div>
@@ -131,13 +168,13 @@ export default function StockDetail() {
           {low52 && (
             <div className="position-row">
               <span>Mínima 52 sem</span>
-              <span className="value">R$ {formatNumber(low52)}</span>
+              <span className="value">R$ {mask(formatNumber(low52))}</span>
             </div>
           )}
           {high52 && (
             <div className="position-row">
               <span>Máxima 52 sem</span>
-              <span className="value">R$ {formatNumber(high52)}</span>
+              <span className="value">R$ {mask(formatNumber(high52))}</span>
             </div>
           )}
           <div className="position-row">
@@ -169,17 +206,19 @@ export default function StockDetail() {
               dataKey="date"
               stroke="#666"
               tick={{ fontSize: 11 }}
-              tickFormatter={(d) => formatDate(d)}
+              tickMargin={8}
+              minTickGap={24}
+              tickFormatter={(d) => formatDate(d, true)}
             />
             <YAxis
               stroke="#666"
               tick={{ fontSize: 11 }}
               domain={['auto', 'auto']}
-              tickFormatter={(v) => formatNumber(v)}
+              tickFormatter={(v) => (hideValues ? '•••' : formatNumber(v))}
             />
             <Tooltip
-              formatter={(v) => `R$ ${formatNumber(v)}`}
-              labelFormatter={(d) => formatDate(d)}
+              formatter={(v) => (hideValues ? 'R$ ••••••' : `R$ ${formatNumber(v)}`)}
+              labelFormatter={(d) => formatTooltipLabel(d)}
               contentStyle={{ background: '#1a1a2e', border: '1px solid #2a2a3e', borderRadius: 8, fontSize: '0.85rem' }}
               labelStyle={{ color: '#888', fontWeight: 600 }}
               itemStyle={{ color: '#fff' }}

@@ -32,6 +32,10 @@
   text-align: right;
 }
 
+.detail-header .eye-toggle-btn {
+  margin-top: 0.5rem;
+}
+
 .detail-price {
   font-size: 2rem;
   font-weight: 700;

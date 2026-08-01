@@ -31,6 +31,23 @@
 .header-nav {
   display: flex;
   gap: 0.5rem;
+  flex: 1;
+}
+
+.logout-btn {
+  background: transparent;
+  border: 1px solid #2a2a3e;
+  color: #b0b0b0;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.logout-btn:hover {
+  border-color: #ef5350;
+  color: #ef5350;
 }
 
 .nav-link {

@@ -3,7 +3,7 @@ import axios from 'axios';
 const token = import.meta.env.VITE_BRAPI_TOKEN;
 
 const api = axios.create({
-  baseURL: '/api/v2',
+  baseURL: 'https://brapi.dev/api/v2',
 });
 
 let dividendsUnavailable = false;

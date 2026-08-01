@@ -1,13 +1,18 @@
 import { useState } from 'react';
 import { useStocks } from '../hooks/useStocks';
 import { useFilter } from '../context/FilterContext';
+import { useAuth } from '../context/AuthContext';
+import { usePrivacy } from '../context/PrivacyContext';
+import EyeToggle from '../components/EyeToggle/EyeToggle';
 import TickerFilter from '../components/TickerFilter/TickerFilter';
 import { formatNumber } from '../utils/format';
 import './Portfolio.css';
 
 export default function Portfolio() {
-  const { stocks, loading, addStock, deleteStock } = useStocks();
+  const { stocks, loading, error, addStock, deleteStock } = useStocks();
+  const { user } = useAuth();
   const { isSelected } = useFilter();
+  const { hideValues } = usePrivacy();
   const [form, setForm] = useState({ ticker: '', quantity: '', purchasePrice: '', purchaseDate: '' });
   const [editMode, setEditMode] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -59,6 +64,32 @@ export default function Portfolio() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="portfolio-page">
+        <h1>Portfolio</h1>
+        <div className="error-state">
+          <p>Erro ao carregar a carteira.</p>
+          <p className="error-detail">{error}</p>
+          {user && (
+            <p className="error-detail">
+              Sua sessão: {user.email} (UID: {user.uid})
+            </p>
+          )}
+          <p className="error-hint">
+            Verifique as regras do Realtime Database em
+            <br />
+            <a href="https://console.firebase.google.com/project/financasfirebase/database/financasfirebase-default-rtdb/rules" target="_blank" rel="noopener noreferrer">
+              console.firebase.google.com → Realtime Database → Rules
+            </a>
+            <br />
+            e confirme que o UID/e-mail autorizado corresponde ao seu usuário em Authentication → Users.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const filteredEntries = Object.entries(stocks).filter(([ticker]) => isSelected(ticker));
 
   return (
@@ -67,6 +98,7 @@ export default function Portfolio() {
         <h1>Portfolio</h1>
         <div className="portfolio-actions">
           {Object.keys(stocks).length > 0 && <TickerFilter tickers={Object.keys(stocks)} />}
+          <EyeToggle />
           <button className="btn-primary" onClick={() => setShowForm(true)}>
             + Adicionar Ativo
           </button>
@@ -158,8 +190,8 @@ export default function Portfolio() {
                 <tr key={ticker}>
                   <td className="ticker-cell">{ticker}</td>
                   <td>{data.quantity}</td>
-                  <td>R$ {formatNumber(data.purchasePrice)}</td>
-                  <td>R$ {formatNumber((data.quantity || 0) * (data.purchasePrice || 0))}</td>
+                  <td>{hideValues ? 'R$ ••••••' : `R$ ${formatNumber(data.purchasePrice)}`}</td>
+                  <td>{hideValues ? 'R$ ••••••' : `R$ ${formatNumber((data.quantity || 0) * (data.purchasePrice || 0))}`}</td>
                   <td>{data.purchaseDate || '-'}</td>
                   <td className="actions-cell">
                     <button className="btn-action edit" onClick={() => handleEdit(ticker, data)}>

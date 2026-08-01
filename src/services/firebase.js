@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, get, set, remove, update } from "firebase/database";
+import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBSuK4nHzo62gxnSPzvPPwYIAkPxgShfs8",
@@ -14,6 +15,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const db = getDatabase(app);
+export const auth = getAuth(app);
 
 const STOCKS_PATH = "stocks";
 
@@ -24,11 +26,6 @@ export async function getAllStocks() {
 
 export async function getStockHistory(ticker) {
   const snap = await get(ref(db, `history/${ticker}`));
-  return snap.val() || {};
-}
-
-export async function getAllHistory() {
-  const snap = await get(ref(db, "history"));
   return snap.val() || {};
 }
 
@@ -61,11 +58,6 @@ export async function saveStockPrices(prices, dividendYields = {}, fxRate = null
   }
 }
 
-export async function seedStocks(initialData) {
-  const existing = await getAllStocks();
-  for (const [ticker, data] of Object.entries(initialData)) {
-    if (!existing[ticker]) {
-      await saveStock(ticker, data);
-    }
-  }
+export async function replaceStocks(portfolio) {
+  await set(ref(db, STOCKS_PATH), portfolio);
 }

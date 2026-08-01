@@ -1,13 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useStocks } from '../hooks/useStocks';
 import { useFilter } from '../context/FilterContext';
+import { usePrivacy } from '../context/PrivacyContext';
 import StockCard from '../components/StockCard/StockCard';
 import TickerFilter from '../components/TickerFilter/TickerFilter';
-import PortfolioBarChart from '../components/Charts/PortfolioBarChart';
-import EquityAreaChart from '../components/Charts/EquityAreaChart';
-import { seedDefaultStocks, INITIAL_STOCKS } from '../services/seedData';
+import EyeToggle from '../components/EyeToggle/EyeToggle';
 import { fetchQuotes, fetchDividends, fetchFxRate } from '../services/brapi';
-import { saveStockPrices, getAllHistory } from '../services/firebase';
+import { saveStockPrices } from '../services/firebase';
 import { formatNumber } from '../utils/format';
 import './Dashboard.css';
 
@@ -29,15 +28,12 @@ function calcDividendYield(dividendResults, quoteMap) {
 
 export default function Dashboard() {
   const { stocks, loading, error, refresh } = useStocks();
-  const [seeding, setSeeding] = useState(false);
-  const [seedError, setSeedError] = useState(null);
   const [testMsg, setTestMsg] = useState(null);
   const [savingPrices, setSavingPrices] = useState(false);
-  const [scope, setScope] = useState('all');
-  const [sortBy, setSortBy] = useState('valueDesc');
   const { isSelected } = useFilter();
-  const [equityData, setEquityData] = useState([]);
-  const [hideValues, setHideValues] = useState(false);
+  const { hideValues } = usePrivacy();
+  const [sortByBr, setSortByBr] = useState('alpha');
+  const [sortByUs, setSortByUs] = useState('alpha');
   const symbols = Object.keys(stocks);
   const brSymbols = symbols.filter((t) => stocks[t]?.currency !== 'USD');
   const usSymbols = symbols.filter((t) => stocks[t]?.currency === 'USD');
@@ -53,40 +49,36 @@ export default function Dashboard() {
     }
   });
 
-  useEffect(() => {
-    let cancelled = false;
-    const loadEquity = async () => {
-      if (!Object.keys(stocks).length) return;
-      const history = await getAllHistory().catch(() => ({}));
-      if (cancelled) return;
+  const positionValue = (ticker) => {
+    const s = stocks[ticker];
+    return (s?.quantity || 0) * (s?.price || 0);
+  };
 
-      const invested = {};
-      const fx = {};
-      let totalInvested = 0;
-      for (const [ticker, s] of Object.entries(stocks)) {
-        invested[ticker] = (s.quantity || 0) * (s.purchasePrice || 0);
-        totalInvested += invested[ticker];
-        fx[ticker] = s.currency === 'USD' ? (s.fxRate || 1) : 1;
-      }
+  const profitPercent = (ticker) => {
+    const s = stocks[ticker];
+    const cost = (s?.quantity || 0) * (s?.purchasePrice || 0);
+    const curr = positionValue(ticker);
+    return cost > 0 ? ((curr - cost) / cost) * 100 : 0;
+  };
 
-      const byDate = {};
-      for (const [ticker, days] of Object.entries(history)) {
-        if (!stocks[ticker]) continue;
-        const qty = stocks[ticker].quantity || 0;
-        for (const [date, d] of Object.entries(days)) {
-          if (!byDate[date]) byDate[date] = 0;
-          byDate[date] += qty * (d.close || 0) * fx[ticker];
-        }
-      }
+  const sortTickers = (list, sortBy) => {
+    const arr = [...list];
+    switch (sortBy) {
+      case 'valueDesc':
+        return arr.sort((a, b) => positionValue(b) - positionValue(a));
+      case 'valueAsc':
+        return arr.sort((a, b) => positionValue(a) - positionValue(b));
+      case 'profitDesc':
+        return arr.sort((a, b) => profitPercent(b) - profitPercent(a));
+      case 'profitAsc':
+        return arr.sort((a, b) => profitPercent(a) - profitPercent(b));
+      default:
+        return arr.sort((a, b) => a.localeCompare(b));
+    }
+  };
 
-      const rows = Object.entries(byDate)
-        .map(([date, value]) => ({ date, invested: totalInvested, value }))
-        .sort((a, b) => a.date.localeCompare(b.date));
-      setEquityData(rows);
-    };
-    loadEquity();
-    return () => { cancelled = true; };
-  }, [stocks]);
+  const sortedBr = sortTickers(brSymbols, sortByBr);
+  const sortedUs = sortTickers(usSymbols, sortByUs);
 
   const handleTestInsert = async () => {
     setTestMsg(null);
@@ -120,27 +112,9 @@ export default function Dashboard() {
     }
   };
 
-  const handleSeed = async () => {
-    setSeeding(true);
-    setSeedError(null);
-    try {
-      await seedDefaultStocks();
-      await refresh();
-    } catch (err) {
-      setSeedError(err.message || 'Erro ao popular dados. Verifique se o Firestore está ativo.');
-    } finally {
-      setSeeding(false);
-    }
-  };
-
   let totalInvested = 0;
   let totalValue = 0;
   let totalProfit = 0;
-  const pieData = [];
-
-  const scopeSymbols = (
-    scope === 'br' ? brSymbols : scope === 'us' ? usSymbols : symbols
-  ).filter((t) => isSelected(t));
 
   symbols.forEach((ticker) => {
     const s = stocks[ticker];
@@ -150,19 +124,6 @@ export default function Dashboard() {
       totalInvested += cost;
       totalValue += curr;
       totalProfit += curr - cost;
-    }
-  });
-
-  scopeSymbols.forEach((ticker) => {
-    const s = stocks[ticker];
-    const cost = (s.quantity || 0) * (s.purchasePrice || 0);
-    const curr = (s.quantity || 0) * (s.price || 0);
-    if (curr > 0) {
-      pieData.push({
-        ticker,
-        value: curr,
-        profitPercent: cost > 0 ? ((curr - cost) / cost) * 100 : null,
-      });
     }
   });
 
@@ -181,13 +142,13 @@ export default function Dashboard() {
           <p>Erro ao conectar com o Firebase.</p>
           <p className="error-detail">{error}</p>
           <p className="error-hint">
-            Certifique-se de que o Firestore está ativo em:
+            Certifique-se de que as regras do Realtime Database permitem seu acesso em:
             <br />
-            <a href="https://console.firebase.google.com/project/financasfirebase/firestore" target="_blank" rel="noopener noreferrer">
-              https://console.firebase.google.com/project/financasfirebase/firestore
+            <a href="https://console.firebase.google.com/project/financasfirebase/database/financasfirebase-default-rtdb/rules" target="_blank" rel="noopener noreferrer">
+              console.firebase.google.com → Realtime Database → Rules
             </a>
             <br />
-            Crie o banco no modo de teste e recarregue a página.
+            A regra deve usar o mesmo UID/e-mail da sua sessão (Authentication → Users) e clicar em Publish.
           </p>
         </div>
       </div>
@@ -199,11 +160,7 @@ export default function Dashboard() {
       <div className="dashboard">
         <div className="empty-state">
           <p>Nenhum ativo cadastrado ainda.</p>
-          <p>Você pode adicionar manualmente em <strong>Portfolio</strong> ou popular com os dados iniciais.</p>
-          {seedError && <p className="error-detail">{seedError}</p>}
-          <button className="btn-primary" onClick={handleSeed} disabled={seeding} style={{ marginTop: '1rem' }}>
-            {seeding ? 'Populando...' : 'Popular 32 ativos iniciais'}
-          </button>
+          <p>Você pode adicionar manualmente em <strong>Portfolio</strong>.</p>
         </div>
       </div>
     );
@@ -219,24 +176,7 @@ export default function Dashboard() {
           {savingPrices ? "Buscando e salvando preços..." : "Buscar e salvar preços"}
         </button>
         {symbols.length > 0 && <TickerFilter tickers={symbols} />}
-        <button
-          className="btn-icon"
-          onClick={() => setHideValues(!hideValues)}
-          title={hideValues ? "Mostrar valores" : "Ocultar valores"}
-        >
-          {hideValues ? (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
-              <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
-              <line x1="1" y1="1" x2="23" y2="23" />
-            </svg>
-          ) : (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-              <circle cx="12" cy="12" r="3" />
-            </svg>
-          )}
-        </button>
+        <EyeToggle />
         {testMsg && (
           <span className={`toolbar-msg ${testMsg.startsWith("Erro") ? 'error' : 'success'}`}>
             {testMsg}
@@ -261,58 +201,24 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="charts-grid">
-        <div className="chart-card">
-          <div className="chart-card-header">
-            <h3>Distribuição da Carteira</h3>
-            <div className="chart-actions">
-              <select
-                className="sort-select"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                title="Ordenar gráfico"
-              >
-                <option value="valueDesc">Maior valor</option>
-                <option value="valueAsc">Menor valor</option>
-                <option value="alpha">Alfabética</option>
-                <option value="profitDesc">Maior lucro %</option>
-                <option value="profitAsc">Menor lucro %</option>
-              </select>
-              <div className="chart-filter">
-                {[
-                  { value: 'all', label: 'Todas' },
-                  { value: 'br', label: 'Nacionais' },
-                  { value: 'us', label: 'Internacionais' },
-                ].map((f) => (
-                  <button
-                    key={f.value}
-                    className={`filter-btn ${scope === f.value ? 'active' : ''}`}
-                    onClick={() => setScope(f.value)}
-                  >
-                    {f.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-          {pieData.length ? (
-            <PortfolioBarChart data={pieData} sortBy={sortBy} />
-          ) : (
-            <p className="chart-empty">Sem dados para exibir</p>
-          )}
-        </div>
-        <div className="chart-card">
-          <h3>Evolução Patrimonial</h3>
-          {equityData.length ? <EquityAreaChart data={equityData} /> : <p className="chart-empty">Rode "Buscar e salvar preços" e depois atualize o histórico para gerar o gráfico</p>}
-        </div>
-      </div>
-
-      <h2>
+      <h2 className="section-header">
         Ativos Nacionais
         <span className="section-count">{brSymbols.length} {brSymbols.length === 1 ? 'ativo' : 'ativos'}</span>
+        <select
+          className="sort-select"
+          value={sortByBr}
+          onChange={(e) => setSortByBr(e.target.value)}
+          title="Ordenar ativos nacionais"
+        >
+          <option value="alpha">Alfabética</option>
+          <option value="valueDesc">Maior posição</option>
+          <option value="valueAsc">Menor posição</option>
+          <option value="profitDesc">Maior lucro %</option>
+          <option value="profitAsc">Menor lucro %</option>
+        </select>
       </h2>
       <div className="stocks-grid">
-        {brSymbols.filter((t) => isSelected(t)).map((ticker) => (
+        {sortedBr.filter((t) => isSelected(t)).map((ticker) => (
           <StockCard
             key={ticker}
             ticker={ticker}
@@ -322,15 +228,27 @@ export default function Dashboard() {
         ))}
       </div>
 
-      <h2>
+      <h2 className="section-header">
         Ativos Internacionais
         <span className="section-count">{usSymbols.length} {usSymbols.length === 1 ? 'ativo' : 'ativos'}</span>
         {usdRate && (
           <span className="usd-rate-label">Dólar hoje: R$ {formatNumber(usdRate)}</span>
         )}
+        <select
+          className="sort-select"
+          value={sortByUs}
+          onChange={(e) => setSortByUs(e.target.value)}
+          title="Ordenar ativos internacionais"
+        >
+          <option value="alpha">Alfabética</option>
+          <option value="valueDesc">Maior posição</option>
+          <option value="valueAsc">Menor posição</option>
+          <option value="profitDesc">Maior lucro %</option>
+          <option value="profitAsc">Menor lucro %</option>
+        </select>
       </h2>
       <div className="stocks-grid">
-        {usSymbols.filter((t) => isSelected(t)).map((ticker) => (
+        {sortedUs.filter((t) => isSelected(t)).map((ticker) => (
           <StockCard
             key={ticker}
             ticker={ticker}
