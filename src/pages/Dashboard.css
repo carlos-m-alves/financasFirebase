@@ -56,7 +56,67 @@
 .chart-card h3 {
   color: #e0e0e0;
   font-size: 1rem;
-  margin: 0 0 1rem;
+  margin: 0;
+}
+
+.chart-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.chart-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.sort-select {
+  background: #0f0f1a;
+  color: #e0e0e0;
+  border: 1px solid #2a2a3e;
+  border-radius: 6px;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sort-select:focus {
+  outline: none;
+  border-color: #4fc3f7;
+}
+
+.chart-filter {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.filter-btn {
+  background: transparent;
+  border: 1px solid #2a2a3e;
+  color: #888;
+  padding: 0.35rem 0.7rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.filter-btn:hover {
+  border-color: #4fc3f7;
+  color: #e0e0e0;
+}
+
+.filter-btn.active {
+  background: #4fc3f7;
+  color: #0f0f1a;
+  border-color: #4fc3f7;
 }
 
 .stocks-grid {
@@ -96,6 +156,16 @@
   color: #4fc3f7;
   background: rgba(79, 195, 247, 0.1);
   border: 1px solid rgba(79, 195, 247, 0.3);
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+}
+
+.section-count {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #b0b0b0;
+  background: #1a1a2e;
+  border: 1px solid #2a2a3e;
   padding: 0.2rem 0.6rem;
   border-radius: 6px;
 }

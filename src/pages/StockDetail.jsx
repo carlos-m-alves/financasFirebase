@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useStocks } from '../hooks/useStocks';
 import { fetchQuotes } from '../services/brapi';
 import { getStockHistory } from '../services/firebase';
@@ -21,7 +21,6 @@ const RANGE_DAYS = { '1mo': 31, '3mo': 92, '6mo': 183, '1y': 366, '2y': 731 };
 
 export default function StockDetail() {
   const { ticker } = useParams();
-  const navigate = useNavigate();
   const { stocks } = useStocks();
   const [quote, setQuote] = useState(null);
   const [history, setHistory] = useState([]);
@@ -76,7 +75,6 @@ export default function StockDetail() {
   if (loading) {
     return (
       <div className="stock-detail">
-        <button className="btn-back" onClick={() => navigate(-1)}>← Voltar</button>
         <p className="loading-text">Carregando {ticker}...</p>
       </div>
     );
@@ -90,8 +88,6 @@ export default function StockDetail() {
 
   return (
     <div className="stock-detail">
-      <button className="btn-back" onClick={() => navigate(-1)}>← Voltar</button>
-
       <div className="detail-header">
         <div>
           <h1>{ticker}</h1>
@@ -184,6 +180,9 @@ export default function StockDetail() {
             <Tooltip
               formatter={(v) => `R$ ${formatNumber(v)}`}
               labelFormatter={(d) => formatDate(d)}
+              contentStyle={{ background: '#1a1a2e', border: '1px solid #2a2a3e', borderRadius: 8, fontSize: '0.85rem' }}
+              labelStyle={{ color: '#888', fontWeight: 600 }}
+              itemStyle={{ color: '#fff' }}
             />
             <Line
               type="monotone"

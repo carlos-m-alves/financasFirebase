@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { useStocks } from '../hooks/useStocks';
+import { useFilter } from '../context/FilterContext';
+import TickerFilter from '../components/TickerFilter/TickerFilter';
 import { formatNumber } from '../utils/format';
 import './Portfolio.css';
 
 export default function Portfolio() {
   const { stocks, loading, addStock, deleteStock } = useStocks();
+  const { isSelected } = useFilter();
   const [form, setForm] = useState({ ticker: '', quantity: '', purchasePrice: '', purchaseDate: '' });
   const [editMode, setEditMode] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -56,13 +59,18 @@ export default function Portfolio() {
     );
   }
 
+  const filteredEntries = Object.entries(stocks).filter(([ticker]) => isSelected(ticker));
+
   return (
     <div className="portfolio-page">
       <div className="portfolio-header">
         <h1>Portfolio</h1>
-        <button className="btn-primary" onClick={() => setShowForm(true)}>
-          + Adicionar Ativo
-        </button>
+        <div className="portfolio-actions">
+          {Object.keys(stocks).length > 0 && <TickerFilter tickers={Object.keys(stocks)} />}
+          <button className="btn-primary" onClick={() => setShowForm(true)}>
+            + Adicionar Ativo
+          </button>
+        </div>
       </div>
 
       {showForm && (
@@ -137,12 +145,16 @@ export default function Portfolio() {
             </tr>
           </thead>
           <tbody>
-            {Object.entries(stocks).length === 0 ? (
+            {filteredEntries.length === 0 ? (
               <tr>
-                <td colSpan="6" className="empty-row">Nenhum ativo cadastrado</td>
+                <td colSpan="6" className="empty-row">
+                  {Object.keys(stocks).length === 0
+                    ? 'Nenhum ativo cadastrado'
+                    : 'Nenhum ativo corresponde ao filtro selecionado'}
+                </td>
               </tr>
             ) : (
-              Object.entries(stocks).map(([ticker, data]) => (
+              filteredEntries.map(([ticker, data]) => (
                 <tr key={ticker}>
                   <td className="ticker-cell">{ticker}</td>
                   <td>{data.quantity}</td>

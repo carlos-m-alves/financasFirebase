@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useStocks } from '../hooks/useStocks';
+import { useFilter } from '../context/FilterContext';
 import StockCard from '../components/StockCard/StockCard';
-import PortfolioPieChart from '../components/Charts/PortfolioPieChart';
+import TickerFilter from '../components/TickerFilter/TickerFilter';
+import PortfolioBarChart from '../components/Charts/PortfolioBarChart';
 import EquityAreaChart from '../components/Charts/EquityAreaChart';
 import { seedDefaultStocks, INITIAL_STOCKS } from '../services/seedData';
 import { fetchQuotes, fetchDividends, fetchFxRate } from '../services/brapi';
@@ -31,6 +33,9 @@ export default function Dashboard() {
   const [seedError, setSeedError] = useState(null);
   const [testMsg, setTestMsg] = useState(null);
   const [savingPrices, setSavingPrices] = useState(false);
+  const [scope, setScope] = useState('all');
+  const [sortBy, setSortBy] = useState('valueDesc');
+  const { isSelected } = useFilter();
   const [equityData, setEquityData] = useState([]);
   const [hideValues, setHideValues] = useState(false);
   const symbols = Object.keys(stocks);
@@ -101,9 +106,12 @@ export default function Dashboard() {
       const dividendYields = calcDividendYield(dividendResults, quoteMap);
       await saveStockPrices(quoteMap, dividendYields, fxRate);
       await refresh();
+      const dividendNote = !dividendResults.length
+        ? " (dividendos indisponíveis: o plano Brapi atual não inclui esse dado)"
+        : "";
       setTestMsg(
         "Preços e dividendos salvos em " + new Date().toLocaleTimeString("pt-BR") +
-        (fxRate ? ` (US$ 1 = R$ ${formatNumber(fxRate)})` : "")
+        (fxRate ? ` (US$ 1 = R$ ${formatNumber(fxRate)})` : "") + dividendNote
       );
     } catch (err) {
       setTestMsg("Erro: " + err.message);
@@ -130,6 +138,10 @@ export default function Dashboard() {
   let totalProfit = 0;
   const pieData = [];
 
+  const scopeSymbols = (
+    scope === 'br' ? brSymbols : scope === 'us' ? usSymbols : symbols
+  ).filter((t) => isSelected(t));
+
   symbols.forEach((ticker) => {
     const s = stocks[ticker];
     if (s) {
@@ -138,14 +150,25 @@ export default function Dashboard() {
       totalInvested += cost;
       totalValue += curr;
       totalProfit += curr - cost;
-      if (curr > 0) pieData.push({ ticker, value: curr });
+    }
+  });
+
+  scopeSymbols.forEach((ticker) => {
+    const s = stocks[ticker];
+    const cost = (s.quantity || 0) * (s.purchasePrice || 0);
+    const curr = (s.quantity || 0) * (s.price || 0);
+    if (curr > 0) {
+      pieData.push({
+        ticker,
+        value: curr,
+        profitPercent: cost > 0 ? ((curr - cost) / cost) * 100 : null,
+      });
     }
   });
 
   if (loading) {
     return (
       <div className="dashboard">
-        <h1>Dashboard</h1>
         <p className="loading-text">Carregando carteira...</p>
       </div>
     );
@@ -154,7 +177,6 @@ export default function Dashboard() {
   if (error) {
     return (
       <div className="dashboard">
-        <h1>Dashboard</h1>
         <div className="error-state">
           <p>Erro ao conectar com o Firebase.</p>
           <p className="error-detail">{error}</p>
@@ -175,7 +197,6 @@ export default function Dashboard() {
   if (!symbols.length) {
     return (
       <div className="dashboard">
-        <h1>Dashboard</h1>
         <div className="empty-state">
           <p>Nenhum ativo cadastrado ainda.</p>
           <p>Você pode adicionar manualmente em <strong>Portfolio</strong> ou popular com os dados iniciais.</p>
@@ -193,12 +214,11 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard">
-      <h1>Dashboard</h1>
-
       <div className="toolbar">
         <button className="btn-primary" onClick={handleTestInsert} disabled={savingPrices}>
           {savingPrices ? "Buscando e salvando preços..." : "Buscar e salvar preços"}
         </button>
+        {symbols.length > 0 && <TickerFilter tickers={symbols} />}
         <button
           className="btn-icon"
           onClick={() => setHideValues(!hideValues)}
@@ -243,8 +263,43 @@ export default function Dashboard() {
 
       <div className="charts-grid">
         <div className="chart-card">
-          <h3>Distribuição da Carteira</h3>
-          {pieData.length ? <PortfolioPieChart data={pieData} /> : <p className="chart-empty">Sem dados para exibir</p>}
+          <div className="chart-card-header">
+            <h3>Distribuição da Carteira</h3>
+            <div className="chart-actions">
+              <select
+                className="sort-select"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                title="Ordenar gráfico"
+              >
+                <option value="valueDesc">Maior valor</option>
+                <option value="valueAsc">Menor valor</option>
+                <option value="alpha">Alfabética</option>
+                <option value="profitDesc">Maior lucro %</option>
+                <option value="profitAsc">Menor lucro %</option>
+              </select>
+              <div className="chart-filter">
+                {[
+                  { value: 'all', label: 'Todas' },
+                  { value: 'br', label: 'Nacionais' },
+                  { value: 'us', label: 'Internacionais' },
+                ].map((f) => (
+                  <button
+                    key={f.value}
+                    className={`filter-btn ${scope === f.value ? 'active' : ''}`}
+                    onClick={() => setScope(f.value)}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          {pieData.length ? (
+            <PortfolioBarChart data={pieData} sortBy={sortBy} />
+          ) : (
+            <p className="chart-empty">Sem dados para exibir</p>
+          )}
         </div>
         <div className="chart-card">
           <h3>Evolução Patrimonial</h3>
@@ -252,9 +307,12 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <h2>Ativos Nacionais</h2>
+      <h2>
+        Ativos Nacionais
+        <span className="section-count">{brSymbols.length} {brSymbols.length === 1 ? 'ativo' : 'ativos'}</span>
+      </h2>
       <div className="stocks-grid">
-        {brSymbols.map((ticker) => (
+        {brSymbols.filter((t) => isSelected(t)).map((ticker) => (
           <StockCard
             key={ticker}
             ticker={ticker}
@@ -266,12 +324,13 @@ export default function Dashboard() {
 
       <h2>
         Ativos Internacionais
+        <span className="section-count">{usSymbols.length} {usSymbols.length === 1 ? 'ativo' : 'ativos'}</span>
         {usdRate && (
           <span className="usd-rate-label">Dólar hoje: R$ {formatNumber(usdRate)}</span>
         )}
       </h2>
       <div className="stocks-grid">
-        {usSymbols.map((ticker) => (
+        {usSymbols.filter((t) => isSelected(t)).map((ticker) => (
           <StockCard
             key={ticker}
             ticker={ticker}

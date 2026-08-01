@@ -9,12 +9,12 @@ const navItems = [
 export default function Layout({ children }) {
   return (
     <div className="layout">
-      <aside className="sidebar">
-        <div className="sidebar-logo">
+      <header className="header">
+        <div className="header-logo">
           <h2>FinancasFirebase</h2>
-          <span className="sidebar-subtitle">Portfolio Analyzer</span>
+          <span className="header-subtitle">Portfolio Analyzer</span>
         </div>
-        <nav className="sidebar-nav">
+        <nav className="header-nav">
           {navItems.map(({ path, label, icon }) => (
             <NavLink
               key={path}
@@ -27,7 +27,7 @@ export default function Layout({ children }) {
             </NavLink>
           ))}
         </nav>
-      </aside>
+      </header>
       <main className="main-content">{children}</main>
     </div>
   );

@@ -20,7 +20,12 @@ export default function EquityAreaChart({ data }) {
         <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3e" />
         <XAxis dataKey="date" stroke="#666" tick={{ fontSize: 12 }} />
         <YAxis stroke="#666" tick={{ fontSize: 12 }} tickFormatter={(v) => `R$${formatNumber(v, 0)}`} />
-        <Tooltip formatter={(v) => `R$ ${formatNumber(v)}`} />
+        <Tooltip
+          formatter={(v) => `R$ ${formatNumber(v)}`}
+          contentStyle={{ background: '#1a1a2e', border: '1px solid #2a2a3e', borderRadius: 8, fontSize: '0.85rem' }}
+          labelStyle={{ color: '#888', fontWeight: 600 }}
+          itemStyle={{ color: '#fff' }}
+        />
         <Area type="monotone" dataKey="invested" stroke="#4fc3f7" fill="url(#colorInvested)" name="Investido" />
         <Area type="monotone" dataKey="value" stroke="#81c784" fill="url(#colorValue)" name="Valor Atual" />
       </AreaChart>
