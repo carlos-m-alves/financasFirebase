@@ -55,9 +55,9 @@ export default function StockCard({ ticker, quote, portfolio, hideValues = false
           <img src={logourl} alt="" className="stock-logo" />
         )}
       </div>
-      <div className="stock-price">R$ {mask(formatNumber(price))}</div>
+      <div className="stock-price">R$ {formatNumber(price)}</div>
       {portfolioItem?.priceUsd != null && (
-        <div className="stock-price-usd">US$ {mask(formatNumber(portfolioItem.priceUsd))}</div>
+        <div className="stock-price-usd">US$ {formatNumber(portfolioItem.priceUsd)}</div>
       )}
       {change != null && (
         <div className="stock-change-wrap">
@@ -76,7 +76,7 @@ export default function StockCard({ ticker, quote, portfolio, hideValues = false
         <div className="stock-portfolio-info">
           <div className="info-row">
             <span>Qtd:</span>
-            <span>{portfolioItem.quantity}</span>
+            <span>{hideValues ? '•••' : portfolioItem.quantity}</span>
           </div>
           <div className="info-row">
             <span>Total:</span>

@@ -33,7 +33,7 @@ src/
 ├── context/        # AuthContext, FilterContext, PrivacyContext
 ├── hooks/          # useStocks, usePrices
 ├── pages/          # Login, Dashboard, Portfolio, StockDetail
-├── services/       # firebase.js (banco), brapi.js (API), seedData.js
+├── services/       # firebase.js (banco), brapi.js (API)
 └── utils/          # format.js
 ```
 

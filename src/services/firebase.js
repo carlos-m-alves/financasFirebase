@@ -37,10 +37,6 @@ export async function removeStock(ticker) {
   await remove(ref(db, `${STOCKS_PATH}/${ticker}`));
 }
 
-export async function testInsert() {
-  await set(ref(db, "test"), "insert funcionando");
-}
-
 export async function saveStockPrices(prices, dividendYields = {}, fxRate = null) {
   const now = new Date().toISOString();
   for (const [ticker, data] of Object.entries(prices)) {
@@ -56,8 +52,4 @@ export async function saveStockPrices(prices, dividendYields = {}, fxRate = null
       updatedAt: now,
     });
   }
-}
-
-export async function replaceStocks(portfolio) {
-  await set(ref(db, STOCKS_PATH), portfolio);
 }

@@ -130,7 +130,7 @@ export default function StockDetail() {
           {quote?.longName && <p className="company-name">{quote.longName}</p>}
         </div>
         <div className="detail-price-info">
-          <div className="detail-price">R$ {mask(formatNumber(price))}</div>
+          <div className="detail-price">R$ {formatNumber(price)}</div>
           <div className={`detail-change ${isPositive ? 'positive' : 'negative'}`}>
             {hideValues ? '••••••' : `${isPositive ? '+' : ''}${formatNumber(change)} (${isPositive ? '+' : ''}${formatPercent(changePercent)})`}
           </div>
@@ -144,7 +144,7 @@ export default function StockDetail() {
             <h3>Minha Posição</h3>
             <div className="position-row">
               <span>Quantidade</span>
-              <span className="value">{portfolio.quantity}</span>
+              <span className="value">{hideValues ? '•••' : portfolio.quantity}</span>
             </div>
             <div className="position-row">
               <span>Preço Médio</span>

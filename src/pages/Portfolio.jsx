@@ -189,7 +189,7 @@ export default function Portfolio() {
               filteredEntries.map(([ticker, data]) => (
                 <tr key={ticker}>
                   <td className="ticker-cell">{ticker}</td>
-                  <td>{data.quantity}</td>
+                  <td>{hideValues ? '•••' : data.quantity}</td>
                   <td>{hideValues ? 'R$ ••••••' : `R$ ${formatNumber(data.purchasePrice)}`}</td>
                   <td>{hideValues ? 'R$ ••••••' : `R$ ${formatNumber((data.quantity || 0) * (data.purchasePrice || 0))}`}</td>
                   <td>{data.purchaseDate || '-'}</td>
