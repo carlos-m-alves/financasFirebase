@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, get, update } from "firebase/database";
+import { readFileSync } from "node:fs";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBSuK4nHzo62gxnSPzvPPwYIAkPxgShfs8",
@@ -15,7 +16,16 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-const TOKEN = "subvuXRfxTmsXdWdCWP3uK";
+function loadTokenFromEnv() {
+  const raw = readFileSync(".env", "utf8");
+  const line = raw
+    .split("\n")
+    .map((l) => l.trim())
+    .find((l) => l.startsWith("VITE_BRAPI_TOKEN="));
+  return line ? line.slice("VITE_BRAPI_TOKEN=".length).trim() : "";
+}
+
+const TOKEN = loadTokenFromEnv();
 const BR_RANGE = "1y";
 const US_RANGE = "3mo";
 

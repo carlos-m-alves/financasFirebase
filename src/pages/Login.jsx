@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth, ALLOWED_EMAIL } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import './Login.css';
 
 export default function Login() {
@@ -61,9 +61,6 @@ export default function Login() {
         <button type="submit" disabled={submitting}>
           {submitting ? 'Entrando...' : 'Entrar'}
         </button>
-        <p className="login-hint">
-          Acesso permitido apenas para {ALLOWED_EMAIL}
-        </p>
       </form>
     </div>
   );

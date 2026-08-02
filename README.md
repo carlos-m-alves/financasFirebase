@@ -1,51 +1,69 @@
 # FinancasFirebase — Portfolio Analyzer
 
-Aplicativo de finanças (portfolio/accões) com React + Vite + Firebase Realtime Database.
+Aplicativo pessoal de finanças que acompanha uma carteira de investimentos em tempo real: ações brasileiras, FIIs e ativos internacionais (EUA), com cotações atualizadas, histórico de preços e indicadores de lucro/prejuízo.
+
+## Funcionalidades
+
+- **Login restrito**: acesso somente para o e-mail autorizado (configurado em `VITE_ALLOWED_EMAIL`).
+- **Dashboard**: resumo da carteira — total investido, valor atual e lucro/prejuízo; separação automática entre ativos nacionais e internacionais (com conversão USD → BRL pelo dólar do dia); ordenação por valor ou lucro; filtro por ticker.
+- **Portfolio**: cadastro, edição e exclusão de ativos (ticker, quantidade, preço pago e data da compra).
+- **Detalhes do ativo**: gráfico de histórico de preços com intervalos de 1M a 2A, além de indicadores como mínima/máxima de 52 semanas e volume.
+- **Atualização de cotações**: busca preços, dividendos (DY 12m) e câmbio na Brapi e salva no Firebase.
+- **Modo privado**: botão que oculta todos os valores na tela.
+
+## Tecnologias
+
+- **React 19 + Vite 8** — interface e build.
+- **React Router 7** — navegação e rotas protegidas.
+- **Recharts 3** — gráficos de histórico de preços.
+- **Firebase**:
+  - **Authentication** (E-mail/senha) — login.
+  - **Realtime Database** — carteira e histórico de preços.
+  - **Hosting** — deploy do site.
+- **Brapi API** — cotações, dividendos, histórico e busca de tickers.
+- **AwesomeAPI** — cotação USD/BRL.
+- **Axios** — chamadas HTTP.
+- **Oxlint** — lint.
+
+## Estrutura do projeto
+
+```
+src/
+├── components/     # Layout, StockCard, TickerFilter, EyeToggle, ErrorBoundary
+├── context/        # AuthContext, FilterContext, PrivacyContext
+├── hooks/          # useStocks, usePrices
+├── pages/          # Login, Dashboard, Portfolio, StockDetail
+├── services/       # firebase.js (banco), brapi.js (API), seedData.js
+└── utils/          # format.js
+```
 
 ## Setup
 
 ```bash
 npm install
-cp .env.example .env   # preencha VITE_BRAPI_TOKEN
+cp .env.example .env   # preencha VITE_BRAPI_TOKEN e VITE_ALLOWED_EMAIL
 npm run dev
 ```
 
-## Login (acesso restrito)
+### Variáveis de ambiente
 
-O acesso é limitado a um unico e-mail (configurado em `VITE_ALLOWED_EMAIL`, padrao: `enriqq3d@gmail.com`). Nenhum outro e-mail consegue entrar.
+| Variável | Descrição |
+| --- | --- |
+| `VITE_BRAPI_TOKEN` | Token de acesso da API Brapi (https://brapi.dev) |
+| `VITE_ALLOWED_EMAIL` | Único e-mail autorizado a acessar o sistema |
 
-### 1. Habilitar autenticacao no Firebase Console
+## Deploy
 
-1. Acesse [Firebase Console](https://console.firebase.google.com) -> projeto `financasfirebase`.
-2. **Build -> Authentication -> Sign-in method** e habilite o provedor **E-mail/senha**.
-3. Em **Users**, adicione o usuario com o e-mail autorizado (`enriqq3d@gmail.com`) e uma senha forte.
-
-### 2. Regras do Realtime Database (reforco no servidor)
-
-Em **Build -> Realtime Database -> Rules**, cole:
-
-```json
-{
-  "rules": {
-    ".read": "auth != null && auth.token.email == 'enriqq3d@gmail.com'",
-    ".write": "auth != null && auth.token.email == 'enriqq3d@gmail.com'"
-  }
-}
+```bash
+npm run build
+firebase deploy
 ```
-
-Com isso, mesmo que alguem altere o codigo do frontend, o banco so le/grava dados com a sessao do e-mail autorizado.
-
-### 3. Como funciona
-
-- `src/context/AuthContext.jsx` — estado de autenticacao e checagem do e-mail autorizado.
-- `src/pages/Login.jsx` — tela de login (e-mail/senha).
-- `src/App.jsx` — rotas protegidas; sem sessao, redireciona para `/login`.
-- Aviso: o e-mail autorizado fica visivel no bundle (frontend); a restricao real e aplicada pelas regras do banco.
 
 ## Scripts
 
 ```bash
-npm run dev     # servidor de desenvolvimento
-npm run build   # build de producao
-npm run lint    # oxlint
+npm run dev       # servidor de desenvolvimento
+npm run build     # build de produção
+npm run lint      # oxlint
+npm run preview   # pré-visualização do build
 ```
